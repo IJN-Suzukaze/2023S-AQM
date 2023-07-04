@@ -1,0 +1,27 @@
+---
+title: "Tu-Linear-02"
+author: "Sicheng Peng, Hajar El Mesaoudi"
+date: "2023/7/4"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,results = "hide",warning=FALSE}
+library("readxl")
+linear_data = read_excel("./Tutorial/1_LinearRegression_Tutorial_Data.xlsx")
+```
+We squared Ctenure and Mtenure and used both as DVs. The result shows both them are significant drivers for financial profit.
+```{r}
+Ctenure2 = linear_data$Ctenure^2
+Mtenure2 = linear_data$Mtenure^2
+performancelmsq = lm(Profit~Ctenure+Ctenure2+Mtenure+Mtenure2+Pop+Comp+Visible+PedCount+Res+Hours24+CrewSkill+MgrSkill+ServiceQuality, data = linear_data)
+summary(performancelmsq)
+```
+Based on the previous results, we find Visible may not be a relative DV for profit. We removed Visible from the linear regression function and the results had no major changes. Hence we conclude Visible is not a significant driver for profit.
+```{r}
+performance = lm(Profit~Ctenure+Ctenure2+Mtenure+Mtenure2+Pop+Comp+PedCount+Res+Hours24+CrewSkill+MgrSkill+ServiceQuality, data = linear_data)
+summary(performance)
+```

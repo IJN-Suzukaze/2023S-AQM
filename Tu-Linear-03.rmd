@@ -1,0 +1,46 @@
+---
+title: "Tu-Linear-03"
+author: "Sicheng Peng, Hajar El Mesaoudi"
+date: "2023/7/4"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r,results = "hide",warning=FALSE}
+library("readxl")
+library("car")
+linear_data = read_excel("./Tutorial/1_LinearRegression_Tutorial_Data.xlsx")
+Ctenure2 = linear_data$Ctenure^2
+Mtenure2 = linear_data$Mtenure^2
+performance = lm(Profit~Ctenure+Ctenure2+Mtenure+Mtenure2+Pop+Comp+PedCount+Res+Hours24+CrewSkill+MgrSkill+ServiceQuality, data = linear_data)
+performancelm = lm(Profit~Mtenure+Ctenure+Pop+Comp+PedCount+Res+Hours24+CrewSkill+MgrSkill+ServiceQuality, data = linear_data)
+```
+We plotted the residual scatter plot of linear regression result. The plot proves homoskedasticity.
+```{r}
+plot(performance$residuals)
+```
+We plotted the acf diagram of linear regression result. The acf hovers around zero, which proves no autocorrelation.
+```{r}
+acf(performance$residuals)
+```
+
+We observed high vif in tenure and squared tenure. We calculated vif of data without squared tenure, and confirmed all DVs have their vif below 5, which indicates no multicolinearity.
+```{r}
+cor(linear_data)
+vif(performance)
+vif(performancelm)
+```
+
+
+We plotted hist and QQ plot, both indicate that residuals have normal distribution.
+```{r}
+hist(performance$residuals)
+plot(performance)
+```
+
+
+

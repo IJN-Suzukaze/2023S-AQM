@@ -1,0 +1,37 @@
+---
+title: "Tu-Linear-01"
+author: "Sicheng Peng, Hajar El Mesaoudi"
+date: "2023/7/4"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+In order not to be bothered with rounding the numbers, set `options(digits=3)`
+`r options(digits=3)`
+
+## Exercise 01
+Install package dependencies and read dataset for tutorial 1 as linear_data
+```{r,results = "hide",warning=FALSE}
+#install.packages("readxl")
+library("readxl")
+linear_data = read_excel("./Tutorial/1_LinearRegression_Tutorial_Data.xlsx")
+```
+We perform linear regression on profit, using crew tenure and manager tenure as DVs.
+The result p-value for Mtenure is lower than 0.05, thus H0 is accepted, manager tenure is a driver of store level financial performance. The result p-value for Ctenure is higher than 0.1, thus H0 is rejected, customer tenure is not a significant driver of store level financial performance. 
+```{r}
+performancelm = lm(linear_data$Profit~linear_data$Mtenure+linear_data$Ctenure)
+summary(performancelm)
+```
+## Exercise 02
+We try different DVs.
+Result shows DV Visible and CrewSkill are not significant in related to financial performance, ServiceQuality is partially relative. The rest DVs are all significant drivers of financial performance.
+```{r}
+totalperformancelm = lm(Profit~Mtenure+Ctenure+Pop+Comp+Visible+PedCount+Res+Hours24+CrewSkill+MgrSkill+ServiceQuality, data = linear_data)
+
+summary(totalperformancelm)
+```
+
+
+
