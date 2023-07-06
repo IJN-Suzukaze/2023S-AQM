@@ -1,0 +1,29 @@
+---
+title: "Tu-Logistic-01"
+author: "Sicheng Peng, Hajar El Mesaoudi"
+date: "2023/7/6"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+In order not to be bothered with rounding the numbers, set `options(digits=3)`
+`r options(digits=3)`
+
+## Exercise 2.1
+```{r,results = "hide",warning=FALSE}
+library("readxl")
+library("car")
+sale_data = read_excel("./Tutorial/2_LogisticRegression_Tutorial_Data.xlsx")
+```
+
+```{r}
+
+
+
+```
+
+
+
+
