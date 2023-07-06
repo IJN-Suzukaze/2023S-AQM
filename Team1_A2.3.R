@@ -44,3 +44,4 @@ Log_reg1 <- glm(Salesforce$ACT~Salesforce$OWSF+Salesforce$OWSS+Salesforce$WWSF+S
 summary(Log_reg1)
 
 
+
