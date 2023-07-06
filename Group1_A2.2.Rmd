@@ -22,16 +22,7 @@ sale_data = read_excel("./Tutorial/2_LogisticRegression_Tutorial_Data.xlsx")
 ```
 
 
-```{r}
-per_situ = sale_data %>%
-  group_by(OWSF,OWSS,WWSF,WWSS) %>%
-  summarise(
-    count = n(), 
-    act = sum(ACT), 
-    rel_act = sum(ACT/n())
-  )
-View(per_situ)
-```
+
 
 
 
@@ -39,9 +30,19 @@ View(per_situ)
 #per_situ = per_situ %>%
  # rowwise() %>%
   sale_data = sale_data%>% mutate(situation = ifelse(OWSS==1,"OWSS",ifelse(OWSF==1,"OWSF",ifelse(WWSF==1,"WWSF","WWSS"))))
-  ungroup %>%
+  ungroup 
   #mutate(situation = factor(situation)) %>%
   #select(-OWSS, -OWSF, -WWSF, -WWSS)
 ```
 
 
+```{r}
+per_situ = sale_data %>%
+  group_by(situation) %>%
+  summarise(
+    count = n(), 
+    act = sum(ACT), 
+    rel_act = sum(ACT/n())
+  )
+View(per_situ)
+```
