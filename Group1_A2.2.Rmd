@@ -16,6 +16,7 @@ In order not to be bothered with rounding the numbers, set `options(digits=3)`
 ```{r,results = "hide",warning=FALSE}
 library("readxl")
 library("car")
+#library("Dict")
 library("tidyverse")
 sale_data = read_excel("./Tutorial/2_LogisticRegression_Tutorial_Data.xlsx")
 ```
@@ -24,11 +25,23 @@ sale_data = read_excel("./Tutorial/2_LogisticRegression_Tutorial_Data.xlsx")
 ```{r}
 per_situ = sale_data %>%
   group_by(OWSF,OWSS,WWSF,WWSS) %>%
-  
-
-
+  summarise(
+    count = n(), 
+    act = sum(ACT), 
+    rel_act = sum(ACT/n())
+  )
+View(per_situ)
 ```
 
 
+
+```{r}
+#per_situ = per_situ %>%
+ # rowwise() %>%
+  sale_data = sale_data%>% mutate(situation = ifelse(OWSS==1,"OWSS",ifelse(OWSF==1,"OWSF",ifelse(WWSF==1,"WWSF","WWSS"))))
+  ungroup %>%
+  #mutate(situation = factor(situation)) %>%
+  #select(-OWSS, -OWSF, -WWSF, -WWSS)
+```
 
 
