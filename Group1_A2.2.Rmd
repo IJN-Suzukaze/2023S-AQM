@@ -1,5 +1,5 @@
 ---
-title: "Tu-Logistic-01"
+title: "Group1_A2.2"
 author: "Sicheng Peng, Hajar El Mesaoudi"
 date: "2023/7/6"
 output: pdf_document
@@ -8,10 +8,11 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
 In order not to be bothered with rounding the numbers, set `options(digits=3)`
 `r options(digits=3)`
 
-## Exercise 2.1
+## Exercise 2.2
 ```{r,results = "hide",warning=FALSE}
 library("readxl")
 library("car")
@@ -19,32 +20,15 @@ library("tidyverse")
 sale_data = read_excel("./Tutorial/2_LogisticRegression_Tutorial_Data.xlsx")
 ```
 
-```{r}
-str(sale_data)
-summary(sale_data)
-```
 
 ```{r}
-sale_data %>%
-  select(-SUC, -LTIME) %>%
-  cor()
+per_situ = sale_data %>%
+  group_by(OWSF,OWSS,WWSF,WWSS) %>%
+  
+
 
 ```
 
 
-```{r}
-obs_per_tech = sale_data %>%
-  group_by(technician) %>%
-  summarise(
-    obs = n(), 
-    act = sum(ACT), 
-    rel_act = act/n()
-  ) 
-average_obs = sale_data %>%
-  summarise(
-    act_all = sum(ACT),
-    rel_act_all = act_all/n()
-  )
-```
 
 
