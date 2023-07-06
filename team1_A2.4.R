@@ -38,11 +38,11 @@ summary(Lin_reg1)
 Log_reg1 <- glm(Salesforce$ACT~Salesforce$OWSF+Salesforce$OWSS+Salesforce$WWSF+Salesforce$WWSS, 
                 family = binomial(link = 'logit') )
 summary(Log_reg1)
-#interpretation: e^ß
 
 
 
-###If you dont control = gets sucked up in the error ≠ ok, adding IV = controlling for IV###
+
+###If you dont control = gets sucked up in the error ? ok, adding IV = controlling for IV###
 ###A2.4:
 Log_reg2 <- glm(Salesforce$ACT ~ Salesforce$OWSF+Salesforce$WWSS+Salesforce$WWSS+Salesforce$SPEC+Salesforce$TRAIN+Salesforce$LEAD+Salesforce$TEXP+Salesforce$TSERV+Salesforce$JOIN+Salesforce$LEAV+Salesforce$SIZE+Salesforce$OPEN+Salesforce$PAY+Salesforce$DUR+Salesforce$ASTAT+Salesforce$FAM+Salesforce$CSERV+Salesforce$CEXP,family = binomial(link = 'logit'))
 summary(Log_reg2)
