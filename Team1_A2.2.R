@@ -24,6 +24,9 @@ av_obsperTech <- perTech %>% summarise(avg_obs = mean(obs), avg_act = mean(act),
 ###A2.2: 
 perSit <- Salesforce %>% group_by(OWSF,OWSS,WWSF,WWSS) %>% summarise(count = n(), act = sum(ACT), rel_act = sum(ACT/n())) 
 
+barplot(perSit)
+str(perSit)
+vect_perSit <- as.vector(perSit)
 
-
-
+barplot(perSit$rel_act)
+barplot(perSit$rel_act,main = 'activity level per service situation', xlab = 'service situation', ylab = 'activity level')
