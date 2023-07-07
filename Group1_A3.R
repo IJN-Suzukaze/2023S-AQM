@@ -30,7 +30,7 @@ per_month = tdf %>%
 
 
 
-
+#use stargazer instead of summary in RMD output
 
 
 
