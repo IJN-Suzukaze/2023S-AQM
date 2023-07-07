@@ -34,7 +34,7 @@ per_month = tdf %>%
 
 
 
-
+#lag all IV by 1 day and use as focal variable
 
 
 
