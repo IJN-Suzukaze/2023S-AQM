@@ -106,24 +106,68 @@ regCall2 <- lm(ln_focal_calls ~
 summary(regCall2)
 
 #test different bg
-bgtest(regCall2, order = 4)
+bgtest(regCall2, order = 6)
 
 
 
 regCall2coef = coeftest(regCall2, vcov = vcovHAC(regCall2, weights = weightsAndrews))
 summary(regCall2coef)
 
-fdllm = dlm(ln_focal_calls ~  
-      ln_community_answers_cum
-    + ln_product_new_devices
-    + ln_product_issues_all
-    + callcenter_closed
-    + product_campaign_days
-    + product_test + first_weeks_problem + ln_community_questions + ln_community_new_users + ln_community_unique_visitors
-    + season_1 + season_2 + season_3 + weekday_mo + weekday_tu + weekday_we + weekday_th + weekday_fr
-    + trend,
-    data=osc, y = ln_focal_calls, x = ln_community_answers_cum, q = 1)
-summary(fdllm)
+
+# 
+# fdllm = dlm(ln_focal_calls ~  
+#       ln_community_answers_cum
+#     + ln_product_new_devices
+#     + ln_product_issues_all
+#     + callcenter_closed
+#     + product_campaign_days
+#     + product_test + first_weeks_problem + ln_community_questions + ln_community_new_users + ln_community_unique_visitors
+#     + season_1 + season_2 + season_3 + weekday_mo + weekday_tu + weekday_we + weekday_th + weekday_fr
+#     + trend,
+#     data=osc, y = ln_focal_calls, x = ln_community_answers_cum
+#     + ln_product_new_devices
+#     + product_campaign_days
+#     + product_test + ln_community_questions + ln_community_new_users + ln_community_unique_visitors, q = 1)
+# summary(fdllm)
+# 
+# 
+# 
+# fdllm2 = dlm(ln_focal_calls ~  
+#               lag_ln_community_answers_cum
+#             + lag_ln_product_new_devices
+#             + ln_product_issues_all
+#             + callcenter_closed
+#             + lag_product_campaign_days
+#             + lag_product_test + first_weeks_problem + lag_ln_community_questions + lag_ln_community_new_users + lag_ln_community_unique_visitors
+#             + season_1 + season_2 + season_3 + weekday_mo + weekday_tu + weekday_we + weekday_th + weekday_fr
+#             + trend,
+#             data=osc, y = ln_focal_calls, q = 1)
+# summary(fdllm2)
+# 
+# 
+# 
+# 
+
+
+
+fdllm3 = lm(ln_focal_calls ~  
+                            lag_ln_community_answers_cum
+                          + lag_ln_product_new_devices
+                          + lag_ln_product_issues_all
+                          + callcenter_closed
+                          + lag_product_campaign_days
+                          + lag_product_test + first_weeks_problem + lag_ln_community_questions + lag_ln_community_new_users + lag_ln_community_unique_visitors
+                          + season_1 + season_2 + season_3 + weekday_mo + weekday_tu + weekday_we + weekday_th + weekday_fr
+                          + trend,
+                          data=osc
+)
+summary(fdllm3)
+
+
+bgtest(fdllm3, order = 6)
+
+
+
 
 
 
