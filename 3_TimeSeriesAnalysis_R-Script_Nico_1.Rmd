@@ -39,7 +39,7 @@ library(magrittr)
 library(png)
 
 knitr::opts_chunk$set(echo = TRUE)
-setwd("/Users/letchkov/Dropbox/01_Letchkov/05 Arbeit/2020-heute_VU Amsterdam/2_Lehre/8_Amsterdam Summer School (VU)/4_Time Series Analysis/Tutorial Time Series Analysis/")
+#setwd("/Users/letchkov/Dropbox/01_Letchkov/05 Arbeit/2020-heute_VU Amsterdam/2_Lehre/8_Amsterdam Summer School (VU)/4_Time Series Analysis/Tutorial Time Series Analysis/")
 options(mc.cores = parallel::detectCores())
 options(max.print = 10000)
 ```
@@ -51,12 +51,12 @@ options(width = 6000)
 # Tutorial 1
 ## Loading data
 ```{r, echo=F}
-osc <- read_excel("./3_TimeSeries_Tutorial_Data.xlsx",col_names = TRUE) 
+osc <- read_excel("./Tutorial/3_TimeSeries_Tutorial_Data.xlsx",col_names = TRUE) 
 ```
 
 ## Question 1: Conceptual Framework
 ```{r echo=F, message=FALSE, warning=FALSE, paged.print=FALSE}
-include_graphics("./Tutorial 1/ConceptualFramework.svg")
+#include_graphics("./Tutorial 1/ConceptualFramework.svg")
 ```
 
 ## Question 2: Historgrams, Time Graphs, and Correlation Matrix
@@ -120,7 +120,7 @@ DT::datatable(corMatrix,
 
 
 ## Question 3: Level time series regression
-```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+```{r eval=FALSE, message=FALSE, include=FALSE, results='asis', warnings=}
 install.packages("tseries")
 library(tseries)
 adf_calls <- adf.test(osc$focal_calls)
