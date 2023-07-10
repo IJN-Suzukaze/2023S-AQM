@@ -152,11 +152,13 @@ summary(regCall2coef)
 
 fdllm3 = lm(ln_focal_calls ~  
                             lag_ln_community_answers_cum
+                          + ln_product_new_devices
                           + lag_ln_product_new_devices
+                          + ln_product_issues_all
                           + lag_ln_product_issues_all
-                          + callcenter_closed
-                          + lag_product_campaign_days
-                          + lag_product_test + first_weeks_problem + lag_ln_community_questions + lag_ln_community_new_users + lag_ln_community_unique_visitors
+                          + callcenter_closed + lag_callcenter_closed
+                          + lag_product_campaign_days + product_campaign_days
+                          + lag_product_test + product_test + first_weeks_problem + lag_ln_community_questions +ln_community_questions+ lag_ln_community_new_users + ln_community_new_users+ lag_ln_community_unique_visitors + ln_community_unique_visitors
                           + season_1 + season_2 + season_3 + weekday_mo + weekday_tu + weekday_we + weekday_th + weekday_fr
                           + trend,
                           data=osc
@@ -167,8 +169,18 @@ summary(fdllm3)
 bgtest(fdllm3, order = 6)
 
 
-
-
+ecmlm = lm( diff(ln_focal_calls) ~  
+             lag_ln_focal_calls + diff(ln_focal_calls)
+             lag_ln_community_answers_cum + 
+           + lag_ln_product_new_devices
+           + lag_ln_product_issues_all
+           + callcenter_closed
+           + lag_product_campaign_days
+           + lag_product_test + first_weeks_problem + lag_ln_community_questions + lag_ln_community_new_users + lag_ln_community_unique_visitors
+           + season_1 + season_2 + season_3 + weekday_mo + weekday_tu + weekday_we + weekday_th + weekday_fr
+           + trend,
+           data=osc)
+summary(ecmlm)
 
 
 
