@@ -169,22 +169,22 @@ summary(fdllm3)
 bgtest(fdllm3, order = 6)
 
 
-ecmlm = lm( diff(ln_focal_calls) ~  
-             lag_ln_focal_calls +
-             lag_ln_community_answers_cum + diff(ln_community_answers_cum)
-           + lag_ln_product_new_devices+ diff(ln_product_new_devices)
-           + lag_ln_product_issues_all+diff(ln_product_issues_all)
-           + lag_callcenter_closed+diff(callcenter_closed)
-           + lag_product_campaign_days+diff(product_campaign_days)
-           + lag_product_test + diff(product_test)
-             + first_weeks_problem 
-             + lag_ln_community_questions + diff(ln_community_questions)
-             + lag_ln_community_new_users + diff(ln_community_new_users)
-             + lag_ln_community_unique_visitors + diff(ln_community_unique_visitors)
-           + season_1 + season_2 + season_3 + weekday_mo + weekday_tu + weekday_we + weekday_th + weekday_fr
-           + trend,
-           data=osc)
-summary(ecmlm)
+# ecmlm = lm( diff(ln_focal_calls) ~  
+#              lag_ln_focal_calls +
+#              lag_ln_community_answers_cum + diff(ln_community_answers_cum)
+#            + lag_ln_product_new_devices+ diff(ln_product_new_devices)
+#            + lag_ln_product_issues_all+diff(ln_product_issues_all)
+#            + lag_callcenter_closed+diff(callcenter_closed)
+#            + lag_product_campaign_days+diff(product_campaign_days)
+#            + lag_product_test + diff(product_test)
+#              + first_weeks_problem 
+#              + lag_ln_community_questions + diff(ln_community_questions)
+#              + lag_ln_community_new_users + diff(ln_community_new_users)
+#              + lag_ln_community_unique_visitors + diff(ln_community_unique_visitors)
+#            + season_1 + season_2 + season_3 + weekday_mo + weekday_tu + weekday_we + weekday_th + weekday_fr
+#            + trend,
+#            data=osc)
+# summary(ecmlm)
 
 
 
