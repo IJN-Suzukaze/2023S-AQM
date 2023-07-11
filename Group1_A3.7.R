@@ -89,8 +89,8 @@ DT::datatable(corMatrix,
 
 lag_osc <- dplyr::lag(osc)
 colnames(lag_osc) <- paste("lag",colnames(lag_osc),sep='_') 
-osc <- cbind(osc,lag_osc)
-rm(lag_osc)
+lag_osc <- cbind(osc,lag_osc)
+lag_osc = lag_osc[-1,]
 
 regCall2 <- lm(ln_focal_calls ~  
                  lag_ln_community_answers_cum
@@ -170,13 +170,17 @@ bgtest(fdllm3, order = 6)
 
 
 ecmlm = lm( diff(ln_focal_calls) ~  
-             lag_ln_focal_calls + diff(ln_focal_calls)
-             lag_ln_community_answers_cum + 
-           + lag_ln_product_new_devices
-           + lag_ln_product_issues_all
-           + callcenter_closed
-           + lag_product_campaign_days
-           + lag_product_test + first_weeks_problem + lag_ln_community_questions + lag_ln_community_new_users + lag_ln_community_unique_visitors
+             lag_ln_focal_calls +
+             lag_ln_community_answers_cum + diff(ln_community_answers_cum)
+           + lag_ln_product_new_devices+ diff(ln_product_new_devices)
+           + lag_ln_product_issues_all+diff(ln_product_issues_all)
+           + lag_callcenter_closed+diff(callcenter_closed)
+           + lag_product_campaign_days+diff(product_campaign_days)
+           + lag_product_test + diff(product_test)
+             + first_weeks_problem 
+             + lag_ln_community_questions + diff(ln_community_questions)
+             + lag_ln_community_new_users + diff(ln_community_new_users)
+             + lag_ln_community_unique_visitors + diff(ln_community_unique_visitors)
            + season_1 + season_2 + season_3 + weekday_mo + weekday_tu + weekday_we + weekday_th + weekday_fr
            + trend,
            data=osc)
@@ -184,6 +188,32 @@ summary(ecmlm)
 
 
 
+diff_osc = as.matrix(osc)
+
+diff_osc = diff(diff_osc)
+
+diff_osc_d = as.data.frame(diff_osc)
+
+colnames(diff_osc_d) = paste("diff",colnames(diff_osc_d),sep='_') 
+diff_osc_d = cbind(lag_osc,diff_osc_d)
+
+
+ecmlm2 = lm( diff_ln_focal_calls ~  
+              lag_ln_focal_calls +
+              lag_ln_community_answers_cum + diff_ln_community_answers_cum
+            + lag_ln_product_new_devices+ diff_ln_product_new_devices
+            + lag_ln_product_issues_all+diff_ln_product_issues_all
+            + lag_callcenter_closed+diff_callcenter_closed
+            + lag_product_campaign_days+diff_product_campaign_days
+            + lag_product_test + diff_product_test
+            + first_weeks_problem 
+            + lag_ln_community_questions + diff_ln_community_questions
+            + lag_ln_community_new_users + diff_ln_community_new_users
+            + lag_ln_community_unique_visitors + diff_ln_community_unique_visitors
+            + season_1 + season_2 + season_3 + weekday_mo + weekday_tu + weekday_we + weekday_th + weekday_fr
+            + trend,
+            data=diff_osc_d)
+summary(ecmlm2)
 
 
 
