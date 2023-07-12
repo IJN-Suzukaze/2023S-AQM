@@ -117,11 +117,11 @@ summary(fixpvcm)
 
 pooltest(poollm, fixpvcm)
 pooltest(fixlm, fixpvcm)
-# pool model rejected
+
 
 
 phtest(fixlm, randlm)
-# random model inconsistent
+
 
 
 
