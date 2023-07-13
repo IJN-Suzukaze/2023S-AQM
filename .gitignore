@@ -4,3 +4,7 @@
 .Ruserdata
 nul
 Tutorial
+.DS_Store
+3_PanelTutorial_Data_Disney1.csv
+*.xlsx
+*.csv
