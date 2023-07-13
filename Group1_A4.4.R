@@ -134,10 +134,9 @@ summary(fixreslm)
 #Wooldridge-Drukker Test for serial correlation
 pwartest(fixlm)
 
-
+#Cluster-robust standard error
 fixlmse = coeftest(fixlm, vcov = plm::vcovHC(fixlm, cluster = "group", method = "arellano"))
-
-summary(fixlmse)
+fixlmse
 
 
 
