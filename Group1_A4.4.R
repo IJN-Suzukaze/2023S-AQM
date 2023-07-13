@@ -106,10 +106,6 @@ fixpvcm = plm(ln_avg_item_price_dollar~
 
 summary(fixpvcm)
 
-
-
-
-
 #bptest(poollm)
 #bptest(fixlm)
 
@@ -118,9 +114,35 @@ summary(fixpvcm)
 pooltest(poollm, fixpvcm)
 pooltest(fixlm, fixpvcm)
 
-
-
 phtest(fixlm, randlm)
+
+
+
+# lag_ln_ppanelds = pdata.frame(ln_panelds, index = c("CustomerID","visit_id"))
+# pseriesfy(lag_ln_ppanelds)
+# 
+# lag_ln_ppanelds = plm::lag(lag_ln_ppanelds, k = 1L, shift = "time")
+
+
+
+#regress residuals on their own lagged values to confirm serial correlation
+fixlmres = fixlm$residuals
+lag_fixlmres = plm::lag(fixlmres, k = 1L, shift = "time")
+fixreslm = lm(fixlmres ~ lag_fixlmres)
+summary(fixreslm)
+
+#Wooldridge-Drukker Test for serial correlation
+pwartest(fixlm)
+
+
+fixlmse = coeftest(fixlm, vcov = plm::vcovHC(fixlm, cluster = "group", method = "arellano"))
+
+summary(fixlmse)
+
+
+
+
+
 
 
 
