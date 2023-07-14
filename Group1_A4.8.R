@@ -150,6 +150,8 @@ strctm = treatReg(disneyadopter ~
             ,data = disney)
 summary(strctm)
 
+#significance level of rho indicates selection
+
 
 for(i in seq_along(disney)){
   disney[[i]] = as.numeric(disney[[i]])
