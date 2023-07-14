@@ -124,6 +124,8 @@ strctm = treatReg(disneyadopter ~
             ,
             streamingcomp_timemeanprop ~ 
               disneyadopter
+            + netflix_timemeanprop
+            + amazon_timemeanprop
             + gender_f
             + age 
             + educ_1 
