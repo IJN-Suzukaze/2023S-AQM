@@ -1,0 +1,354 @@
+---
+title: "Panel Data Tutorial"
+author: "Nico Schauerte"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    collapsed: true #true is default; controls whether the TOC appears with only the top-level (e.g., H2) headers. If collapsed initially, the TOC is                      automatically expanded inline when necessary.
+    smooth_scroll: true #true is default; controls whether page scrolls are animated when TOC items are navigated to via mouse clicks.
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+#rm(list = ls()) 
+library(plyr)
+library(stargazer)
+library(sandwich) 
+library(xts)
+library(pander)
+library(lmtest)
+library(formattable)
+library(mvtnorm)
+library(ggplot2)
+library(MASS)
+library(readxl)
+library(car)
+library(psych)
+library(lmtest)
+library(lubridate)
+library(stringr)
+library(rmarkdown)
+library(knitr)
+library(DT)
+library(magrittr)
+library(png)
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+setwd("/Users/letchkov/Dropbox/01_Letchkov/05 Arbeit/2020-heute_VU Amsterdam/2_Lehre/8_Amsterdam Summer School (VU)/5_Panel Data Analysis/2_Tutorial")
+options(mc.cores = parallel::detectCores())
+options(max.print = 10000)
+```
+
+```{r set-options, echo=FALSE}
+options(width = 6000)
+```
+
+# Tutorial 1 (Static Models)
+## Loading data
+```{r, echo=F}
+indulge <- read_excel("./4_PanelTutorial_Data_Indulgence.xlsx",col_names = TRUE) 
+
+```
+
+## Question 1: Histograms, Descriptives, Correlation Matrix
+```{r, echo=F}
+descriptives <- as.data.frame(summary(indulge[4:ncol(indulge)]))[,2:3] 
+colnames(descriptives) <- c("Variable", "Stat")
+descriptives
+
+# Alternative to have it in a table directly (and more elegantly)
+descriptives <- apply(indulge[4:ncol(indulge)], 2, summary, digits = 3) #applies the #summary function for each column of the data frame
+DT::datatable(descriptives, 
+                                   options = list(pageLength = 16, autoWidth = TRUE,  searching=FALSE, paging=FALSE,
+                                   columnDefs = list(list(width = '10px', targets = c(1, 3))), scrollX=T, scrollY="400px", scrollCollapse=T), 
+                                   callback = JS("return table;"), 
+                                   class= c("hover", "compact","stripe", "row-border"), style="bootstrap")
+
+
+hist(indulge$avg_item_price_dollar)
+hist(log(indulge$avg_item_price_dollar+1))
+hist(indulge$n_items_guest)
+
+# Transformation of variables
+indulge$ln_avg_item_price_dollar <- log(indulge$avg_item_price_dollar)
+
+# Summaries grouped by redemption variable
+indulge %>% group_by(redemption) %>% dplyr::summarize(avg_price = mean(avg_item_price_dollar), items = mean(n_items_guest), inter_visit_time = mean(time_since_last), lunch = mean(lunch), weekend = mean(weekend), observations = n(),)
+
+# Correlation matrix
+corMatrix <- indulge[,4:ncol(indulge)] %>% cor() %>% as.data.frame() %>% mutate_if(is.numeric, round, digits = 3)
+
+DT::datatable(corMatrix, options = list(pageLength = 16, autoWidth = TRUE,  searching=FALSE, paging=FALSE, columnDefs = list(list(width = '10px', targets = c(1, 3))), scrollX=T, scrollY="400px", scrollCollapse=T), callback = JS("return table;"), class= c("hover", "compact","stripe", "row-border"), style="bootstrap")
+```
+
+
+## Question 2: Pooled regression
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+regPool <- lm(ln_avg_item_price_dollar ~ redemption + n_items_guest + post_redemption + points_rule_15 + n_guests_final + time_since_last + membership_length + weekend + lunch + birthday +  as.factor(Brand_id) + visit_id, data=indulge) 
+#summary(regPool)
+
+stargazer(regPool, type="html")
+```
+
+## Question 3: Fixed effects model with dummy variables
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+regDummy <- lm(ln_avg_item_price_dollar ~ redemption + n_items_guest + post_redemption + points_rule_15 + n_guests_final + time_since_last + membership_length + weekend + lunch + birthday + Brand_id + visit_id +  as.factor(CustomerID), data=indulge) 
+##summary(regDummy)
+
+stargazer(regDummy, type="html")
+```
+\
+\
+- **The problem here is that we have lots of dummy variables in our model. The more dummies, the messier it gets and the higher will be the R-squared.**
+
+## Question 4: Fixed ("within") and random effects models
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+library(plm)
+regWithin <- plm(ln_avg_item_price_dollar ~ redemption + n_items_guest + post_redemption + points_rule_15 + n_guests_final + time_since_last + membership_length + weekend + lunch + birthday + Brand_id  + as.numeric(visit_id), data=indulge, model="within", index = c("CustomerID","visit_id"))
+#summary(regWithin)
+
+regRandom <- plm(ln_avg_item_price_dollar ~ redemption + n_items_guest + post_redemption + points_rule_15 + n_guests_final + time_since_last + membership_length + weekend + lunch + birthday + Brand_id  + as.numeric(visit_id), data=indulge, model="random", index = c("CustomerID","visit_id"))
+#summary(regRandom)
+stargazer(regPool, regDummy, regWithin, regRandom, type="html", column.labels = c("Pooled", "LSD", "FE", "RE"))
+```
+
+## Question 5: Model selection
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+# (1) Pooled versus fixed-effects model
+regPool <- plm(ln_avg_item_price_dollar ~ redemption + n_items_guest + post_redemption + points_rule_15 + n_guests_final + time_since_last + membership_length + weekend + lunch + birthday + Brand_id + as.numeric(visit_id), data=indulge, model="pool", index = c("CustomerID","visit_id"))
+pooltest(regPool, regWithin) #the pooled model is not usable - there seems to be too much heterogeneity in the data
+bptest(regRandom)
+bptest(regWithin)
+bptest(regPool)
+
+
+# (2) Fixed- versus random-effects model
+phtest(regWithin, regRandom) #random effects is inconsistent=
+```
+\
+\
+- **The fixed-effects model ("within") model is the most appropriate one!**
+
+# Tutorial 2 (Serial Correlation)
+## Question 6: Serial correlation
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+# (1) Extract residuals from the model
+#indulge$CustomerID <-  as.factor(indulge$CustomerID)
+residuals_within <- residuals(regWithin)
+lagged_residuals_within <- plm::lag(residuals_within)
+residRegression <- lm(residuals_within ~ lagged_residuals_within)
+# More precise alternative
+residuals_within <- data.frame(residual = residuals(regWithin), attr(residuals(regWithin), "index")) #attr function attaches the panel information to the residuals, because otherwise plm could re-order the residuals and we don't know which residuals belong to which panel-time combination
+indulge <- left_join(indulge, residuals_within, by=c("CustomerID", "visit_id"))
+indulge$lag_residual <- plm::lag(indulge$residual) #calculate the lags of the residuals in the panel structure
+residRegression <- lm(residual ~ lag_residual, data=indulge) 
+summary(residRegression)
+stargazer(residRegression, type="html")
+
+# Wooldridge-Drukker Test
+pwartest(regWithin) #Easiest option
+## Alternative with control of serial correlation in the test regression
+pwartest(ln_avg_item_price_dollar ~ redemption + n_items_guest + post_redemption + points_rule_15 + n_guests_final + time_since_last + membership_length + weekend + lunch + birthday + Brand_id + as.numeric(visit_id), data=indulge, model="within", index=c("CustomerID", "visit_id"), type = "HC3") # The HC3 argument controls for serial correlation in this auxiliary regression
+
+```
+\
+\
+- **Serial correlation seems to be an issue (not surprisingly)!**
+
+## Question 7: Combatting serial correlation
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+library(lmtest)
+library(sandwich)
+library(plm)
+
+regWithin <- plm(ln_avg_item_price_dollar ~ redemption + n_items_guest + post_redemption + points_rule_15 + n_guests_final + time_since_last + membership_length + weekend + lunch + birthday + Brand_id + as.numeric(visit_id), data=indulge, model="within", index = c("CustomerID","visit_id"))
+
+regWithinRob <- coeftest(regWithin,vcov=plm::vcovHC(regWithin,type="HC3",cluster="group", method="arellano")) #arellano gives us heteroskedasticity + serial correlation robust covariance matrix; cluster = "group" just tells us we use cross-section fixed effects, not time
+stargazer(regWithinRob, type="html")
+
+```
+\
+\
+## Question 8: Something to think about
+\
+- 8.1  This is true because essentially you can interpret every panel (i.e., here, customer) as a cluster, if the panel structure is not nested (in the original sense)
+- 8.2  Yes we could, and this is also done routinely oftentimes. However, using clustered errors makes the analysis less efficient if there are no issues with serial correlation or heteroskedasticity.
+- 8.3  Both tackle different issues. Fixed effects eliminate heterogeneity (and CAN control for a type of endogeneity), affecting the coefficient estimates of a regression. (Cluster-)robust standard errors affect the inference and take care of serial correlation and/or heteroskedasticity. You can and should apply both if appropriate.
+
+
+
+# Tutorial 3 (Dynamic Models)
+## Question 9: FDL model
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+# Create lags of independent variables (or use them directly in the model)
+regWithinFDL <- plm(ln_avg_item_price_dollar ~ redemption + lag(redemption)
+                    + n_items_guest + lag(n_items_guest) 
+                    + post_redemption + lag(post_redemption)
+                    + points_rule_15 + lag(points_rule_15) 
+                    + n_guests_final + lag(n_guests_final) 
+                    + time_since_last + lag(time_since_last) 
+                    + membership_length + weekend + lunch + birthday + Brand_id + as.numeric(visit_id), data=indulge, model="within", index = c("CustomerID","visit_id"))
+##summary(regWithinFDL)
+
+stargazer(regWithinFDL, type="html")
+```
+\
+\
+- **Not really any interesting dynamics (does not make much sense intuitively anyway)**
+
+
+## Question 10: LDV model
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+# Create lags of independent variables (or use them directly in the model)
+regWithinLDV <- plm(ln_avg_item_price_dollar ~ lag(ln_avg_item_price_dollar) + redemption + n_items_guest + post_redemption + points_rule_15 + n_guests_final + time_since_last  + membership_length + weekend + lunch + birthday + Brand_id + as.numeric(visit_id), data=indulge, model="within", index = c("CustomerID","visit_id"))
+##summary(regWithinLDV)
+stargazer(regWithinLDV, type="html")
+```
+\
+\
+- **Possible biases:** \
+  - Is there still remaining serial correlation in the model?
+  - Nickel-Bias: Fixed-effects estimation with small T and large N could yield biased estimates
+
+## Question 11: Arrelano-Bond estimator for panel data models
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+regWithinAB <- pgmm(ln_avg_item_price_dollar ~ lag(ln_avg_item_price_dollar,1) + redemption + n_items_guest + post_redemption + points_rule_15 + n_guests_final + time_since_last  + membership_length + weekend + lunch + birthday + Brand_id + as.numeric(visit_id) | lag(ln_avg_item_price_dollar, 2:4), data=indulge, model="twosteps", effect="individual", index = c("CustomerID","visit_id"))
+##summary(regWithinAB)
+stargazer::stargazer(regWithinAB, type="html")
+
+```
+\
+\
+- **If serial correlation persisted, you could add additional lags of all variables to capture the dynamics**
+
+# Tutorial 3 (Selection)
+## Question 12: Model-free evidence for streaming competitors and free TV
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+# Loading data
+library(tidyverse)
+disneyPart <- read.csv("./4_PanelTutorial_Data_Disney1.csv") 
+
+modelFreeComp <- disneyPart %>% group_by(disneyadopter) %>% dplyr::summarize(mean = mean(streamingcomp_timemeanprop), se = sd(streamingcomp_timemeanprop)/sqrt(n()))
+
+adopterPlotComp <- ggplot(data=modelFreeComp, aes(x=as.factor(disneyadopter), y=mean )) + #global plot settings
+                geom_bar(stat = "identity", position="dodge", width = 0.5) + #overall settings for the bar chart
+                geom_errorbar(aes(ymax = mean + se, ymin= mean - se), position = position_dodge(width=0.5), width=0.1 )+
+                labs(x="Disney+ Adopter", y="Relative Use") + #adds titles to the axes
+                theme(axis.title.y = element_text(margin = margin(t = 0, r = 20, b = 0, l = 0)))+
+                theme(axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))+
+                theme(text = element_text(size=28, family="serif")) +
+                #scale_fill_discrete(name = "Time Point", labels = c("Pre", "Post")) + #changes the labels of the legend
+                scale_y_continuous(limits = c(0,.5), expand = c(0,0), breaks = c(0,.1, .2, .3, .4, .5), labels = scales::number_format(accuracy = .01)) + #changs y-axis; I have to adjust this for each                  figure
+                scale_x_discrete(expand = c(0.5,0), labels = c("No", "Yes")) + #changes the scale and labels of x-axis
+               # scale_fill_manual(values = c("#535053", "#B2B3B6"), labels = c("Pre", "Post"))+ #changes legend settings
+                
+                theme(  panel.grid.major = element_blank(), #eliminates the grid lines
+                        panel.grid.minor = element_blank(), #eliminates the grid lines
+                        axis.line = element_line(colour = "black", size = 0.4, #changes settings for the y- and x-axes lines
+                                    linetype = 1, lineend = "butt"),
+                                    panel.background = element_blank(),
+                        aspect.ratio = 0.8,             #changes the ratio of x- and y- axe
+                        legend.title = element_blank()) #gets rid of the legend title
+print(adopterPlotComp)
+
+modelFreeTV <- disneyPart %>% group_by(disneyadopter) %>% dplyr::summarize(mean = mean(freeTVMedia_timemeanprop), se = sd(freeTVMedia_timemeanprop)/sqrt(n()))
+
+adopterPlotTV <-ggplot(data=modelFreeTV, aes(x=as.factor(disneyadopter), y=mean )) + #global plot settings
+                geom_bar(stat = "identity", position="dodge", width = 0.5) + #overall settings for the bar chart
+                geom_errorbar(aes(ymax = mean + se, ymin= mean - se), position = position_dodge(width=0.5), width=0.1 )+
+                labs(x="Disney+ Adopter", y="Relative Use") + #adds titles to the axes
+                theme(axis.title.y = element_text(margin = margin(t = 0, r = 20, b = 0, l = 0)))+
+                theme(axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))+
+                theme(text = element_text(size=28, family="serif")) +
+                #scale_fill_discrete(name = "Time Point", labels = c("Pre", "Post")) + #changes the labels of the legend
+                scale_y_continuous(limits = c(0,.8), expand = c(0,0), breaks = c(0,.1, .2, .3, .4, .5, .6, .7, .8), labels = scales::number_format(accuracy = .01)) + #changs y-axis; I have to adjust this for each                  figure
+                scale_x_discrete(expand = c(0.5,0), labels = c("No", "Yes")) + #changes the scale and labels of x-axis
+               # scale_fill_manual(values = c("#535053", "#B2B3B6"), labels = c("Pre", "Post"))+ #changes legend settings
+                
+                theme(  panel.grid.major = element_blank(), #eliminates the grid lines
+                        panel.grid.minor = element_blank(), #eliminates the grid lines
+                        axis.line = element_line(colour = "black", size = 0.4, #changes settings for the y- and x-axes lines
+                                    linetype = 1, lineend = "butt"),
+                                    panel.background = element_blank(),
+                        aspect.ratio = 0.8,             #changes the ratio of x- and y- axe
+                        legend.title = element_blank()) #gets rid of the legend title
+print(adopterPlotTV)
+```
+
+## Question 13: Ordinary least squares estimation
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+disneyOLSStream <- lm(streamingcomp_timemeanprop ~ disneyadopter + gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 + people + quality + overload + fragmentation + nostalgia + criticalinfra + shortwork +  corona_3 + corona_4 + corona_5 + involvement + innovation_cat + children, data=disneyPart)
+summary(disneyOLSStream)
+
+disneyOLSTV <- lm(freeTVMedia_timemeanprop ~ disneyadopter + gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 + people + quality + overload + fragmentation + nostalgia + criticalinfra + shortwork + corona_3 + corona_4 + corona_5 + involvement + innovation_cat + children, data=disneyPart)
+summary(disneyOLSTV)
+stargazer(disneyOLSStream, disneyOLSTV, type="html")
+```
+
+## Question 14: Heckman-type endogenous treatment regression
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+library(sampleSelection)
+disneyHeckmanStream <- treatReg(disneyadopter ~ gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 + people + quality + overload + fragmentation + criticalinfra + shortwork + corona_3 + corona_4 + corona_5 + involvement + innovation_cat + children + disney_sym + disneyinterest, 
+                                streamingcomp_timemeanprop ~ disneyadopter + gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 +  people + quality + overload + fragmentation +  criticalinfra + shortwork + corona_4 + corona_3 + corona_5 + involvement + innovation_cat + children, data=disneyPart)
+summary(disneyHeckmanStream)
+
+disneyHeckmanTV <- treatReg(disneyadopter ~ gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 + people + quality + overload + fragmentation + criticalinfra + shortwork + corona_3 + corona_4 + corona_5 + involvement + innovation_cat + children + disney_sym + disneyinterest, freeTVMedia_timemeanprop ~ disneyadopter + gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 + people + quality + overload + fragmentation +  criticalinfra + shortwork + corona_4 + corona_3 + corona_5 + involvement + innovation_cat + children, data=disneyPart)
+summary(disneyHeckmanTV)
+
+stargazer(disneyOLSStream, disneyHeckmanStream, disneyOLSTV, disneyHeckmanTV, type="html")
+```
+
+# Tutorial 4 (Difference-in-Differences)
+## Question 15: DiD regression
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+library(plm)
+disneyFull <- read.csv("./4_PanelTutorial_Data_Disney2.csv") 
+disneyDiDStream <- lm(streamingcomp_timemeanprop ~ disneyadopter + time + disneyadopter:time + gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 +  people + quality + overload + fragmentation +  criticalinfra + shortwork + corona_4 + corona_3 + corona_5 + involvement + innovation_cat + children, data=disneyFull)
+summary(disneyDiDStream)
+
+disneyDiDTV <- lm(freeTVMedia_timemeanprop ~ disneyadopter + time + disneyadopter:time + gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 +  people + quality + overload + fragmentation +  criticalinfra + shortwork + corona_4 + corona_3 + corona_5 + involvement + innovation_cat + children, data=disneyFull)
+summary(disneyDiDTV)
+
+# An alternative would be a random-effects model with essentially the same setup (in this specific case, FE would not work because the fixed effects and the group variable disneyadopter are perfectly colinear)
+disneyDiDStreamRE <- plm(streamingcomp_timemeanprop ~ disneyadopter + time + disneyadopter:time + gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 +  people + quality + overload + fragmentation +  criticalinfra + shortwork + corona_4 + corona_3 + corona_5 + involvement + innovation_cat + children, data=disneyFull, index=c("ID", "time"), model="random")
+##summary(disneyDiDStreamRE)
+
+disneyDiDTVRE <- plm(freeTVMedia_timemeanprop ~ disneyadopter + time + disneyadopter:time + gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 +  people + quality + overload + fragmentation +  criticalinfra + shortwork + corona_4 + corona_3 + corona_5 + involvement + innovation_cat + children, data=disneyFull, index=c("ID", "time"), model="random")
+##summary(disneyDiDTVRE)
+
+stargazer(disneyDiDStream, disneyDiDTV, disneyDiDStreamRE, disneyDiDTVRE, type="html")
+```
+\
+\
+- **Interpretation: Tendency for similar cannibalization effects of Disney+ access on streaming incumbents and traditional TV**
+
+
+## Question 16: DiD regression with Heckman correction
+```{r message = FALSE, echo=F, results='asis', warnings = FALSE}
+disneyHeckmanStreamDiD <- treatReg(disneyadopter ~ gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 + people + quality + overload + fragmentation + criticalinfra + shortwork + corona_3 + corona_4 + corona_5 + involvement + innovation_cat + children + disney_sym + disneyinterest, streamingcomp_timemeanprop ~ disneyadopter + time + disneyadopter:time + gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 +  people + quality + overload + fragmentation +  criticalinfra + shortwork + corona_4 + corona_3 + corona_5 + involvement + innovation_cat + children, data=disneyFull)
+summary(disneyHeckmanStreamDiD) #a bit disappointing
+
+disneyHeckmanTVDiD <- treatReg(disneyadopter ~ gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 + people + quality + overload + fragmentation + criticalinfra + shortwork + corona_3 + corona_4 + corona_5 + involvement + innovation_cat + children + disney_sym + disneyinterest, freeTVMedia_timemeanprop ~ disneyadopter + time + disneyadopter:time + gender_f + age + educ_1 + educ_2 + income_2 + income_3 + income_4 + income_5 + income_6 +  people + quality + overload + fragmentation +  criticalinfra + shortwork + corona_4 + corona_3 + corona_5 + involvement + innovation_cat + children, data=disneyFull)
+summary(disneyHeckmanTVDiD) # also a bit disappointing
+
+# Cluster-robust standard errors (not required for the assignment, but could be an additional step because we have large N and small T)
+library(lmtest)
+library(sandwich)
+disneyHeckmanStreamDiD <- coeftest(disneyHeckmanStreamDiD, vcov=vcovHAC(disneyHeckmanStreamDiD, order.by = disneyFull$ID))
+disneyHeckmanTVDiD <- coeftest(disneyHeckmanTVDiD, vcov=vcovHAC(disneyHeckmanTVDiD, order.by = disneyFull$ID))
+disneyHeckmanStreamDiD
+disneyHeckmanTVDiD
+stargazer(disneyHeckmanStreamDiD, disneyHeckmanTVDiD, type="html", column.labels = c("Incumbent Streaming", "Television"))
+```
+\
+\
+- **Interpretation: Using DiD, a Heckman selection, AND cluster-robust standard errors shows that if consumers have access to Disney+, they do reduce their use of streaming incumbents and traditional free television (cannibalization effects)**
+
+
+
+
+
